@@ -34,7 +34,7 @@ const insertURLs = rowCount => (
 
             db.get("SELECT SUM(pgsize) AS size_in_bytes FROM dbstat WHERE name = 'url_shortener'", (error, row) => {
                 if (error) throw error;
-                console.log(`Table size of ${rowCount} is ${row.size_in_bytes} bytes`);
+                console.log(`Table size of ${rowCount} URLs is ${row.size_in_bytes} bytes`);
                 db.close((err) => {
                     if (err) {
                         throw new Error(err);

@@ -1,1 +1,4 @@
-Time taken for inserting 1000000 entries is 6.953secs
+Connection established
+Time taken to insert 1000000 URLs into the table is 10821.284 secs
+Table size of 1000000 URLs is 64933888 bytes
+Connection closed
