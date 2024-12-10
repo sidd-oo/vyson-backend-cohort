@@ -1,6 +1,5 @@
 import sqlite3 from 'sqlite3';
 
-
 const shortCodes = ["exp999", "exp1203", "exp878", "exp400", "exp98"];
 const db = new sqlite3.Database("url_shortener.db", (err) => {
     if (err) {

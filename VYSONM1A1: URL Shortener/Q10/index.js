@@ -37,7 +37,7 @@ const insertAndFetchShortCode = rowCount => (
                 })
             }
             //Loop 1000M/1B times
-            fetchOriginalURLs(shortCodes, rowCount, 1000000000).then(() => {
+            fetchOriginalURLs(shortCodes, rowCount, 10000000000).then(() => {
                 closeDBconnection();
             })
 
