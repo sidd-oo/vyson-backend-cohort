@@ -16,8 +16,7 @@ const todoTable = `CREATE TABLE IF NOT EXISTS todos(
     title TEXT NOT NULL,
     user_id INTEGER NOT NULL,
     is_completed BOOLEAN DEFAULT 0 NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    due_date DATE NOT NULL,
+    created_at NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id)
 )`;
 
@@ -62,28 +61,38 @@ const runScript = () => {
 
             await asyncRunQuery(db, todoTable);
             console.log("Todo Table created successfully.");
-            const todoQuery = `INSERT INTO todos(title, user_id, is_completed, due_date) VALUES(?, ?, ?, ?)`;
+            const todoQuery = `INSERT INTO todos(title, user_id, is_completed, created_at) VALUES(?, ?, ?, DATE('2024-01-01', '+' || (ABS(RANDOM() % 365)) || ' days'))`;
             const titleVal = "TODO";
-            const randomFutureDate = () => new Date(Date.now() + (Math.random() * 2 - 1) * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-
             for (let i = 0; i < 10; i++) {
-                await asyncRunQuery(db, todoQuery, [titleVal + i, Math.floor(Math.random() * 5) + 1, Math.random() < 0.5, randomFutureDate()])
+                await asyncRunQuery(db, todoQuery, [titleVal + i, Math.floor(Math.random() * 5) + 1, Math.random() < 0.5])
             }
 
             const todos = await asyncAllQuery(db, `SELECT * FROM todos`);
             console.table(todos);
 
-            // Fetch the over due todos and list them in due_date asc order
-            const currentDate = new Date().toISOString().split('T')[0];
-            const fetchOverDueQuery = `SELECT todos.id, todos.title, users.name, users.email, todos.due_date, todos.is_completed 
-                                       FROM todos 
-                                       JOIN users 
-                                       ON todos.user_id = users.id
-                                       WHERE todos.due_date < ? AND todos.is_completed = 0
-                                       ORDER BY todos.due_date ASC`;
-            const fetchedOverDueResults = await asyncAllQuery(db, fetchOverDueQuery, [currentDate]);
-            console.table(fetchedOverDueResults);
+            //  Query to get the latest todo item added by each user, along with the user’s name
+            const queryToFetchLatestTodos = `SELECT 
+                                                    users.id AS user_id,
+                                                    users.name AS user_name,
+                                                    todos.id AS todo_id,
+                                                    todos.title AS todo_title,
+                                                    todos.created_at AS todo_created_at
+                                                FROM 
+                                                    users
+                                                JOIN 
+                                                    todos
+                                                ON 
+                                                    users.id = todos.user_id
+                                                WHERE 
+                                                    todos.created_at IN (
+                                                        SELECT MAX(created_at)
+                                                        FROM todos
+                                                        WHERE todos.user_id = users.id
+                                                    )
+                                                ORDER BY 
+                                                    users.id`;
+            const result = await asyncAllQuery(db, queryToFetchLatestTodos);
+            console.table(result);
         } catch (error) {
             console.error(error);
         } finally {
@@ -96,4 +105,3 @@ const runScript = () => {
 }
 
 runScript()
-

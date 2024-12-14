@@ -1,3 +1,4 @@
+
 const sqlite3 = require('sqlite3');
 
 const db = new sqlite3.Database(":memory:", () => {
@@ -74,16 +75,12 @@ const runScript = () => {
             const todos = await asyncAllQuery(db, `SELECT * FROM todos`);
             console.table(todos);
 
-            // Fetch the over due todos and list them in due_date asc order
-            const currentDate = new Date().toISOString().split('T')[0];
-            const fetchOverDueQuery = `SELECT todos.id, todos.title, users.name, users.email, todos.due_date, todos.is_completed 
-                                       FROM todos 
-                                       JOIN users 
-                                       ON todos.user_id = users.id
-                                       WHERE todos.due_date < ? AND todos.is_completed = 0
-                                       ORDER BY todos.due_date ASC`;
-            const fetchedOverDueResults = await asyncAllQuery(db, fetchOverDueQuery, [currentDate]);
-            console.table(fetchedOverDueResults);
+            // Fetch the todos count each user has, grouped by user_id.
+            const fetchtodosCount = `SELECT user_id, COUNT(*) AS todo_count
+                                     FROM todos
+                                     GROUP BY user_id;`
+            const fetchtodosCountRes = await asyncAllQuery(db, fetchtodosCount);
+            console.table(fetchtodosCountRes);
         } catch (error) {
             console.error(error);
         } finally {
@@ -96,4 +93,3 @@ const runScript = () => {
 }
 
 runScript()
-

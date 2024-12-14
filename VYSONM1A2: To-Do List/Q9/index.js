@@ -17,7 +17,6 @@ const todoTable = `CREATE TABLE IF NOT EXISTS todos(
     user_id INTEGER NOT NULL,
     is_completed BOOLEAN DEFAULT 0 NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    due_date DATE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id)
 )`;
 
@@ -62,28 +61,26 @@ const runScript = () => {
 
             await asyncRunQuery(db, todoTable);
             console.log("Todo Table created successfully.");
-            const todoQuery = `INSERT INTO todos(title, user_id, is_completed, due_date) VALUES(?, ?, ?, ?)`;
+            const todoQuery = `INSERT INTO todos(title, user_id, is_completed) VALUES(?, ?, ?)`;
             const titleVal = "TODO";
-            const randomFutureDate = () => new Date(Date.now() + (Math.random() * 2 - 1) * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-
             for (let i = 0; i < 10; i++) {
-                await asyncRunQuery(db, todoQuery, [titleVal + i, Math.floor(Math.random() * 5) + 1, Math.random() < 0.5, randomFutureDate()])
+                await asyncRunQuery(db, todoQuery, [titleVal + i, Math.floor(Math.random() * 5) + 1, Math.random() < 0.5])
             }
 
             const todos = await asyncAllQuery(db, `SELECT * FROM todos`);
             console.table(todos);
 
-            // Fetch the over due todos and list them in due_date asc order
-            const currentDate = new Date().toISOString().split('T')[0];
-            const fetchOverDueQuery = `SELECT todos.id, todos.title, users.name, users.email, todos.due_date, todos.is_completed 
-                                       FROM todos 
-                                       JOIN users 
-                                       ON todos.user_id = users.id
-                                       WHERE todos.due_date < ? AND todos.is_completed = 0
-                                       ORDER BY todos.due_date ASC`;
-            const fetchedOverDueResults = await asyncAllQuery(db, fetchOverDueQuery, [currentDate]);
-            console.table(fetchedOverDueResults);
+            // Query to delete a user. Ensure that when a user is deleted, all their associated to-do items are also deleted. (hint: foreign key relationships or cascading deletes)
+
+            const alterTodoQuery = `ALTER TABLE todos 
+                                    ADD COLUMN description TEXT;`;
+            const updateTodoQuery = `UPDATE todos 
+                                    SET description = 'TODO Description Value'`
+            const updatedTodosTable = `SELECT * FROM todos;`
+            await asyncRunQuery(db, alterTodoQuery);
+            await asyncRunQuery(db, updateTodoQuery);
+            const result = await asyncAllQuery(db, updatedTodosTable);
+            console.table(result);
         } catch (error) {
             console.error(error);
         } finally {
@@ -96,4 +93,3 @@ const runScript = () => {
 }
 
 runScript()
-
